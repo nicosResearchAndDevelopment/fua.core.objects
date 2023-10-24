@@ -35,7 +35,9 @@ objects.equals = function (subject, target) {
  * @returns {Object}
  */
 objects.extend = function (target = {}, ...sourceArr) {
+    if (!util.isObjectLike(target)) return target;
     for (let source of sourceArr) {
+        if (!util.isObjectLike(source)) continue;
         for (let [key, sVal] of Object.entries(source)) {
             const tVal  = target[key];
             target[key] = util.isNativeObject(sVal)
@@ -47,12 +49,22 @@ objects.extend = function (target = {}, ...sourceArr) {
 };
 
 /**
+ * @param {...Object} sourceArr
+ * @returns {Object}
+ */
+objects.combine = function (...sourceArr) {
+    return objects.extend({}, ...sourceArr);
+};
+
+/**
  * @param {Object} target
  * @param {...Object} sourceArr
  * @returns {Object}
  */
 objects.reduce = function (target = {}, ...sourceArr) {
+    if (!util.isObjectLike(target)) return target;
     for (let source of sourceArr) {
+        if (!util.isObjectLike(source)) continue;
         for (let [key, sVal] of Object.entries(source)) {
             const tVal = target[key];
             if (objects.equals(tVal, sVal)) delete target[key];
@@ -63,19 +75,84 @@ objects.reduce = function (target = {}, ...sourceArr) {
     return target;
 };
 
+/**
+ * @template T
+ * @param {T} target
+ * @returns {Readonly<T>}
+ */
 objects.freeze = function (target) {
+    if (!util.isObjectLike(target)) return target;
     return Object.freeze(target);
 };
 
+/**
+ * @template T
+ * @param {T} target
+ * @returns {Readonly<T>}
+ */
 objects.freeze.recursive = function (target) {
-    if (!util.isObject(value) && !util.isFunction(value)) return target;
+    if (!util.isObjectLike(target)) return target;
     if (Object.isFrozen(target)) return target;
     Object.freeze(target);
     Object.values(target).forEach(objects.freeze.recursive);
     return target;
 };
 
-// TODO lock/seal
+/**
+ * @template T
+ * @param {T} target
+ * @returns {Readonly<T>}
+ */
+objects.seal = function (target) {
+    if (!util.isObjectLike(target)) return target;
+    return Object.seal(target);
+};
 
-util.sealModule(objects);
+/**
+ * @template T
+ * @param {T} target
+ * @returns {Readonly<T>}
+ */
+objects.seal.recursive = function (target) {
+    if (!util.isObjectLike(target)) return target;
+    if (Object.isSealed(target)) return target;
+    Object.seal(target);
+    Object.values(target).forEach(objects.seal.recursive);
+    return target;
+};
+
+/**
+ * @template T
+ * @param {T} target
+ * @returns {Readonly<T>}
+ */
+objects.lock = function (target) {
+    if (!util.isObjectLike(target)) return target;
+    const lock = {writable: false, configurable: false};
+    for (let key of Object.keys(target)) {
+        const writable = !Object.prototype.hasOwnProperty.call(target, key) || Reflect.getOwnPropertyDescriptor(target, key).configurable;
+        if (writable) Object.defineProperty(target, key, lock);
+    }
+    return target;
+};
+
+/**
+ * @template T
+ * @param {T} target
+ * @returns {Readonly<T>}
+ */
+objects.lock.recursive = function (target) {
+    if (!util.isObjectLike(target)) return target;
+    const lock = {writable: false, configurable: false};
+    for (let [key, child] of Object.entries(target)) {
+        const writable = !Object.prototype.hasOwnProperty.call(target, key) || Reflect.getOwnPropertyDescriptor(target, key).configurable;
+        if (writable) {
+            Object.defineProperty(target, key, lock);
+            objects.lock.recursive(child);
+        }
+    }
+    return target;
+};
+
+objects.freeze.recursive(objects);
 module.exports = objects;
