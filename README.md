@@ -1,1 +1,1 @@
-# @nrd/fua.core.objects
+# fua.core.objects
