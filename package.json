@@ -1,5 +1,5 @@
 {
-  "name": "@nicosResearchAndDevelopment/fua.core.objects",
+  "name": "@fua/core.objects",
   "version": "1.0.1",
   "description": "",
   "main": "src/objects.js",
@@ -22,6 +22,6 @@
     "type": "git",
     "url": "ssh://git@github.com:nicosResearchAndDevelopment/fua.core.objects.git"
   },
-  "author": "Simon Petrac",
+  "author": "Simon Petrac <pfoerdie@gmail.com>",
   "license": "MIT"
 }
